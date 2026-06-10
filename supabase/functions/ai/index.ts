@@ -30,23 +30,37 @@ async function claude(opts: {
     messages: [{ role: "user", content: opts.content }],
   };
   if (opts.webSearch) {
-    body.tools = [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }];
+    body.tools = [{ type: "web_search_20250305", name: "web_search", max_uses: 3 }];
   }
 
-  const res = await fetch(ANTHROPIC_URL, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Anthropic API ${res.status}: ${err.slice(0, 300)}`);
+  // Retry on 429 (Tier 1 input-token-per-minute limits are easy to hit).
+  let res: Response | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    res = await fetch(ANTHROPIC_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify(body),
+    });
+    if (res.status !== 429) break;
+    const retryAfter = Number(res.headers.get("retry-after")) || 20;
+    console.warn(`429 rate limit, waiting ${retryAfter}s (attempt ${attempt + 1})`);
+    if (attempt < 2) await new Promise((r) => setTimeout(r, retryAfter * 1000));
   }
-  const data = await res.json();
+  if (!res!.ok) {
+    const err = await res!.text();
+    console.error("ANTHROPIC_ERROR", res!.status, err);
+    if (res!.status === 429) {
+      throw new Error(
+        "AI услугата е претоварена в момента (лимит на заявките). Опитай пак след минута.",
+      );
+    }
+    throw new Error(`Anthropic API ${res!.status}: ${err.slice(0, 300)}`);
+  }
+  const data = await res!.json();
   return (data.content ?? [])
     .filter((b: any) => b.type === "text")
     .map((b: any) => b.text)
@@ -111,7 +125,7 @@ Schema: {"name": string, "brand": string|null, "category": string|null, "summary
       },
     ],
     webSearch: true,
-    maxTokens: 6000,
+    maxTokens: 3000,
   });
   return parseJSON(text);
 }
@@ -206,7 +220,7 @@ Schema: {"products": [{"name": string, "brand": string|null, "type": string, "wh
   const text = await claude({
     system,
     content: [img(p.image), { type: "text", text: "Recognize the cosmetic products in this photo and analyze the routine." }],
-    maxTokens: 4000,
+    maxTokens: 2500,
   });
   return parseJSON(text);
 }
@@ -251,7 +265,7 @@ Deno.serve(async (req: Request) => {
       headers: { ...cors, "Content-Type": "application/json" },
     });
   } catch (e) {
-    console.error(e);
+    console.error("FN_ERROR", (e as Error).message, (e as Error).stack);
     return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 400,
       headers: { ...cors, "Content-Type": "application/json" },
