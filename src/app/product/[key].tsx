@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { notify } from "../../lib/notify";
 import { MatchRing } from '../../components/MatchRing';
 import { Button, Card, Chip, Row, Section } from '../../components/ui';
 import { AltItem, findAlternatives, findDupes, Personalization, personalize } from '../../lib/ai';
@@ -61,7 +62,7 @@ export default function ProductScreen() {
         kind === 'dupe' ? await findDupes(base, lang) : await findAlternatives(base, await getProfile(), lang);
       setAlts({ kind, items: res.items ?? [] });
     } catch (e: any) {
-      Alert.alert('', e.message ?? t('error'));
+      notify(e.message ?? t('error'));
     } finally {
       setAltBusy(false);
     }

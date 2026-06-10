@@ -3,7 +3,8 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import React, { useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { notify } from "../../lib/notify";
 import { Button, Card } from '../../components/ui';
 import { analyzeProduct, cacheKeyFor, identifyProduct, obfByBarcode, obfSearch, OBFProduct } from '../../lib/ai';
 import { useI18n } from '../../lib/i18n';
@@ -61,7 +62,7 @@ export default function Search() {
       }
       router.push({ pathname: '/product/[key]', params: { key } });
     } catch (e: any) {
-      Alert.alert('', e.message ?? t('error'));
+      notify(e.message ?? t('error'));
     } finally {
       setBusy(null);
     }
@@ -105,7 +106,7 @@ export default function Search() {
       openProduct({ name: id.name, brand: id.brand });
     } catch (e: any) {
       setBusy(null);
-      Alert.alert('', e.message ?? t('error'));
+      notify(e.message ?? t('error'));
     }
   };
 

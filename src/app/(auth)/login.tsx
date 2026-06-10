@@ -2,7 +2,8 @@ import { makeRedirectUri } from 'expo-auth-session';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
+import { notify } from "../../lib/notify";
 import { Button } from '../../components/ui';
 import { useI18n } from '../../lib/i18n';
 import { supabase } from '../../lib/supabase';
@@ -38,7 +39,7 @@ export default function Login() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setLoading(false);
-    if (error) Alert.alert('', error.message);
+    if (error) notify(error.message);
     else router.replace('/(tabs)');
   };
 
@@ -47,7 +48,7 @@ export default function Login() {
       await signInWithGoogle();
       router.replace('/(tabs)');
     } catch (e: any) {
-      Alert.alert('', e.message ?? t('error'));
+      notify(e.message ?? t('error'));
     }
   };
 

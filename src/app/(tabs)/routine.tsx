@@ -1,6 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { notify } from "../../lib/notify";
 import { Button, Card, Chip, Row, Section } from '../../components/ui';
 import { analyzeRoutine, RoutineAnalysis } from '../../lib/ai';
 import { useI18n } from '../../lib/i18n';
@@ -42,7 +43,7 @@ export default function Routine() {
         });
       }
     } catch (e: any) {
-      Alert.alert('', e.message ?? t('error'));
+      notify(e.message ?? t('error'));
     } finally {
       setBusy(false);
     }

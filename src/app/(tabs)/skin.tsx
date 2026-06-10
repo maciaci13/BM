@@ -1,7 +1,8 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { router } from 'expo-router';
 import React, { useRef, useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { notify } from "../../lib/notify";
 import { Button, Card } from '../../components/ui';
 import { analyzeSkin } from '../../lib/ai';
 import { useI18n } from '../../lib/i18n';
@@ -36,7 +37,7 @@ export default function SkinScan() {
     } catch (e: any) {
       setPhase('idle');
       setProgress(0);
-      Alert.alert('', e.message ?? t('error'));
+      notify(e.message ?? t('error'));
     }
   };
 

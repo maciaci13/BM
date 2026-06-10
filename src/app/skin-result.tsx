@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { notify } from "../lib/notify";
 import { Button, Card, Chip, Row, Section } from '../components/ui';
 import { SkinAnalysis } from '../lib/ai';
 import { useI18n } from '../lib/i18n';
@@ -31,10 +32,10 @@ export default function SkinResult() {
         .from('profiles')
         .update({ current_skin_analysis: merged, skin_type: analysis.skin_type, skin_concerns: concerns, onboarding_completed: true })
         .eq('id', auth.user.id);
-      Alert.alert('', t('saved'));
+      notify(t('saved'));
       router.replace('/(tabs)');
     } catch (e: any) {
-      Alert.alert('', e.message ?? t('error'));
+      notify(e.message ?? t('error'));
     } finally {
       setSaving(false);
     }

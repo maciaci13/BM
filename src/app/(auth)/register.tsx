@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput } from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput } from 'react-native';
+import { notify } from "../../lib/notify";
 import { Button } from '../../components/ui';
 import { useI18n } from '../../lib/i18n';
 import { supabase } from '../../lib/supabase';
@@ -22,9 +23,9 @@ export default function Register() {
       options: { data: { full_name: name.trim() } },
     });
     setLoading(false);
-    if (error) return Alert.alert('', error.message);
+    if (error) return notify(error.message);
     if (data.session) router.replace('/(tabs)');
-    else Alert.alert('', t('checkEmail'));
+    else notify(t('checkEmail'));
   };
 
   const google = async () => {
@@ -32,7 +33,7 @@ export default function Register() {
       await signInWithGoogle();
       router.replace('/(tabs)');
     } catch (e: any) {
-      Alert.alert('', e.message ?? t('error'));
+      notify(e.message ?? t('error'));
     }
   };
 
