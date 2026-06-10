@@ -6,7 +6,7 @@ import React, { useRef, useState } from 'react';
 import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { notify } from "../../lib/notify";
 import { Button, Card } from '../../components/ui';
-import { analyzeProduct, cacheKeyFor, identifyProduct, obfByBarcode, obfSearch, OBFProduct } from '../../lib/ai';
+import { cacheKeyFor, identifyProduct, obfByBarcode, obfSearch, OBFProduct } from '../../lib/ai';
 import { useI18n } from '../../lib/i18n';
 import { supabase } from '../../lib/supabase';
 import { colors, radius, type } from '../../lib/theme';
@@ -23,60 +23,19 @@ export default function Search() {
   // ---- shared: resolve a product into a cached analysis, then open it ----
   const openProduct = async (q: { name: string; brand?: string | null; barcode?: string | null; ingredients_text?: string | null; image_url?: string | null }) => {
     const key = cacheKeyFor(q);
-    setBusy(t('analyzingProduct'));
-    try {
-      const { data: cached } = await supabase.from('product_cache').select('cache_key').eq('cache_key', key).maybeSingle();
-      if (!cached) {
-        const analysis = await analyzeProduct(
-          { name: q.name, brand: q.brand, barcode: q.barcode, ingredients_text: q.ingredients_text },
-          lang,
-        );
-        const { error: upErr } = await supabase.from('product_cache').upsert(
-          {
-            cache_key: key,
-            product_name: analysis.name || q.name,
-            brand: analysis.brand ?? q.brand ?? null,
-            category: analysis.category,
-            image_url: q.image_url ?? null,
-            summary: analysis.summary,
-            ingredients: analysis.ingredients,
-            insights: { formula_analysis: analysis.formula_analysis },
-            reviews: analysis.review_summary,
-            base_match_score: analysis.base_match_score,
-            source_meta: { barcode: q.barcode ?? null, ingredients_text: q.ingredients_text ?? null },
-          },
-          { onConflict: 'cache_key' },
-        );
-        if (upErr) {
-          // Cache write failed (e.g. RLS) — surface it instead of silently stalling.
-          notify(`Грешка при запис: ${upErr.message}`);
-          setBusy(null);
-          return;
-        }
-      }
-      // scan_history is best-effort; never block navigation on it.
-      try {
-        const { data: auth } = await supabase.auth.getUser();
-        if (auth.user) {
-          await supabase.from('scan_history').insert({
-            user_id: auth.user.id,
-            product_name: q.name,
-            brand: q.brand ?? null,
-            barcode: q.barcode ?? null,
-            image_url: q.image_url ?? null,
-            source: q.barcode ? 'barcode' : 'search',
-            raw_data: { cache_key: key },
-          });
-        }
-      } catch {
-        /* ignore history errors */
-      }
-      setBusy(null);
-      router.push({ pathname: '/product/[key]', params: { key } });
-    } catch (e: any) {
-      setBusy(null);
-      notify(e.message ?? t('error'));
-    }
+    // Navigate immediately with the basic data we already have from Open Beauty Facts.
+    // The product page itself runs the AI analysis in the background with loaders.
+    router.push({
+      pathname: '/product/[key]',
+      params: {
+        key,
+        name: q.name,
+        brand: q.brand ?? '',
+        image_url: q.image_url ?? '',
+        ingredients_text: q.ingredients_text ?? '',
+        barcode: q.barcode ?? '',
+      },
+    });
   };
 
   // ---- name search ----
