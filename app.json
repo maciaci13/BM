@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "BeautyMatch",
+    "slug": "beautymatch",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "beautymatch",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.beautymatch.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "BeautyMatch uses the camera to scan your skin, products and barcodes.",
+        "NSPhotoLibraryUsageDescription": "BeautyMatch lets you pick product or shelf photos for AI analysis."
+      }
+    },
+    "android": {
+      "package": "com.beautymatch.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#FAF6F1",
+        "foregroundImage": "./assets/images/android-icon-foreground.png"
+      },
+      "permissions": ["CAMERA"]
+    },
+    "plugins": [
+      "expo-router",
+      ["expo-camera", { "cameraPermission": "BeautyMatch uses the camera to scan your skin, products and barcodes." }],
+      ["expo-image-picker", { "photosPermission": "BeautyMatch lets you pick product or shelf photos for AI analysis." }],
+      ["expo-splash-screen", { "image": "./assets/images/splash-icon.png", "backgroundColor": "#FAF6F1", "imageWidth": 200 }],
+      "expo-secure-store",
+      "expo-web-browser"
+    ],
+    "experiments": { "typedRoutes": true },
+    "extra": {
+      "supabaseUrl": "https://trwtjyekccdxwhphbkfl.supabase.co",
+      "supabaseAnonKey": "sb_publishable_Mg61BqYZeFAafZjPWWwgYg_qNW5Zwv-"
+    }
+  }
+}
