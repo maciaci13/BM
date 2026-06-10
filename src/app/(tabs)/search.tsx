@@ -31,7 +31,7 @@ export default function Search() {
           { name: q.name, brand: q.brand, barcode: q.barcode, ingredients_text: q.ingredients_text },
           lang,
         );
-        await supabase.from('product_cache').upsert(
+        const { error: upErr } = await supabase.from('product_cache').upsert(
           {
             cache_key: key,
             product_name: analysis.name || q.name,
@@ -47,24 +47,35 @@ export default function Search() {
           },
           { onConflict: 'cache_key' },
         );
+        if (upErr) {
+          // Cache write failed (e.g. RLS) — surface it instead of silently stalling.
+          notify(`Грешка при запис: ${upErr.message}`);
+          setBusy(null);
+          return;
+        }
       }
-      const { data: auth } = await supabase.auth.getUser();
-      if (auth.user) {
-        await supabase.from('scan_history').insert({
-          user_id: auth.user.id,
-          product_name: q.name,
-          brand: q.brand ?? null,
-          barcode: q.barcode ?? null,
-          image_url: q.image_url ?? null,
-          source: q.barcode ? 'barcode' : 'search',
-          raw_data: { cache_key: key },
-        });
+      // scan_history is best-effort; never block navigation on it.
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        if (auth.user) {
+          await supabase.from('scan_history').insert({
+            user_id: auth.user.id,
+            product_name: q.name,
+            brand: q.brand ?? null,
+            barcode: q.barcode ?? null,
+            image_url: q.image_url ?? null,
+            source: q.barcode ? 'barcode' : 'search',
+            raw_data: { cache_key: key },
+          });
+        }
+      } catch {
+        /* ignore history errors */
       }
+      setBusy(null);
       router.push({ pathname: '/product/[key]', params: { key } });
     } catch (e: any) {
-      notify(e.message ?? t('error'));
-    } finally {
       setBusy(null);
+      notify(e.message ?? t('error'));
     }
   };
 
