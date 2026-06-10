@@ -6,7 +6,20 @@ async function callAI<T = any>(action: string, payload: Record<string, any>): Pr
   const { data, error } = await supabase.functions.invoke('ai', {
     body: { action, ...payload },
   });
-  if (error) throw new Error(error.message ?? 'AI request failed');
+  if (error) {
+    // Supabase puts the function's actual response body in error.context.
+    let detail = error.message ?? 'AI request failed';
+    try {
+      const ctx: any = (error as any).context;
+      if (ctx && typeof ctx.json === 'function') {
+        const body = await ctx.json();
+        if (body?.error) detail = body.error;
+      }
+    } catch {
+      /* keep generic message */
+    }
+    throw new Error(detail);
+  }
   if (data?.error) throw new Error(data.error);
   return data as T;
 }
